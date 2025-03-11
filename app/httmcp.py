@@ -10,6 +10,7 @@ from mcp.server.fastmcp.server import _convert_to_content
 from mcp.server.lowlevel.server import request_ctx, RequestContext
 import httpx
 from fastapi.routing import APIRouter
+from openapiclient import OpenAPIClient
 
 
 logger = logging.getLogger(__name__)
@@ -99,6 +100,7 @@ class HTTMCP(FastMCP):
                     pass
                 response = JSONRPCResponse(id=requst_id or "", jsonrpc=message.root.jsonrpc, result=result)
             except Exception as e:
+                logger.exception(e)
                 logger.error(f"Error processing request {message}: {str(e)}")
                 response = JSONRPCError(id=requst_id, error=ErrorData(code=0, message=str(e)))
             return Response(
@@ -196,7 +198,7 @@ class HTTMCP(FastMCP):
             )
             name, arguments = message.root.params.get('name', ''), message.root.params.get('arguments', {})
             context = self.get_context()
-            result = await self._tool_manager.call_tool(name, arguments, context=context)
+            result = await self.call_tool_with_context(name, arguments, context=context)
             if isinstance(result, Response):
                 return result
             content = _convert_to_content(result)
@@ -209,3 +211,37 @@ class HTTMCP(FastMCP):
             if token is not None:
                 request_ctx.reset(token)
         return CallToolResult(content=list(content), isError=isError)
+
+    async def call_tool_with_context(self, name: str, arguments: dict, context: Context) -> Any:
+        return await self._tool_manager.call_tool(name, arguments, context=context)
+
+
+class OpenAPIMCP(HTTMCP):
+    def __init__(self, api: OpenAPIClient, client: Any, publish_server: str | None = None, api_prefix: str = "", **settings: Any):
+        self.api = api
+        self.client = client
+        api_title = api.definition.get('info', {}).get('title', '')
+        # Replace spaces, hyphens, dots and other special characters
+        api_version = api.definition.get('info', {}).get('version', '')
+        instructions = api.definition.get('info', {}).get('description', '')
+        name = f"{api_title}MCP_{api_version}" if api_version else f"{api_title}"
+        name = ''.join(c for c in name if c.isalnum())
+        super().__init__(name, instructions, publish_server, api_prefix, **settings)
+
+    async def list_tools_handler(self, message, **kwargs):
+        print("list_tools_handler", self.client.tools)
+        return ListToolsResult(tools=[Tool(
+            name=tool["function"].get('name', ''),
+            description=tool["function"].get('description', ''),
+            inputSchema=tool["function"].get('parameters', {}),  # 这里只是名字不一样
+        ) for tool in self.client.tools])
+
+    async def call_tool_with_context(self, name: str, arguments: dict, context: Context) -> Any:
+        # ignore context
+        return await self.client(name, **arguments)
+
+    @staticmethod
+    async def from_openapi(definition: str, publish_server: str) -> "OpenAPIMCP":
+        api = OpenAPIClient(definition=definition)
+        client = await api.init()
+        return OpenAPIMCP(api, client, publish_server)

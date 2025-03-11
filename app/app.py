@@ -45,11 +45,19 @@ def get_data() -> str:
     return "Hello, world!"
 
 
-logger.debug("Server started", server.router.routes)
+logger.debug("Server started %r", server.router.routes)
 app.include_router(server.router)
 
 # can add more mcp servers here
 # app.include_router(server2.router)
+
+async def create_openapi_mcp_server():
+    url = "https://ghfast.top/https://raw.githubusercontent.com/lloydzhou/openapiclient/refs/heads/main/examples/jinareader.json"
+    server1 = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
+    logger.debug("Server1 started %r", server1.router.routes)
+    app.include_router(server1.router)
+
+asyncio.run(create_openapi_mcp_server())
 
 if __name__ == "__main__":
     import uvicorn

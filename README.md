@@ -15,6 +15,7 @@ Nchan-MCP-Transport是一个中间件服务，通过整合Nginx的Nchan模块与
 - **会话管理**: 自动处理MCP会话创建和维护
 - **工具系统**: 支持MCP工具定义和调用
 - **资源管理**: 内置资源管理功能
+- **OpenAPI集成**: 支持将OpenAPI规范自动转换为MCP服务
 
 ## 优点
 
@@ -23,6 +24,7 @@ Nchan-MCP-Transport是一个中间件服务，通过整合Nginx的Nchan模块与
 3. **简单部署**: 使用Docker封装，便于部署和横向扩展
 4. **协议适应性**: 自动检测并适配最合适的连接方式(WebSocket/SSE)
 5. **稳定性**: 通过Nchan提供可靠的消息缓存和传递机制
+6. **灵活扩展**: 支持通过OpenAPI规范快速集成第三方服务
 
 ## 局限性
 
@@ -94,6 +96,25 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
+
+#### 使用OpenAPIMCP集成OpenAPI服务
+
+可以通过OpenAPI规范文件轻松创建MCP服务:
+
+```python
+async def create_openapi_mcp_server():
+    # OpenAPI规范文件URL
+    url = "https://example.com/api-spec.json"
+    # 创建OpenAPIMCP实例
+    openapi_server = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
+    # 挂载到FastAPI应用
+    app.include_router(openapi_server.router)
+
+# 运行创建函数
+asyncio.run(create_openapi_mcp_server())
+```
+
+这将把OpenAPI中定义的所有操作自动转换为MCP工具，可以通过MCP协议调用。
 
 #### 客户端集成
 

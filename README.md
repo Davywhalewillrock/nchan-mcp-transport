@@ -50,7 +50,13 @@ git clone https://github.com/yourusername/nchan-mcp-transport.git
 cd nchan-mcp-transport
 ```
 
-2. 启动服务:
+2. 安装依赖:
+
+```bash
+pip install httmcp
+```
+
+3. 启动服务:
 
 ```bash
 docker-compose up -d

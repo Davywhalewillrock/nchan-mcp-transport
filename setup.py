@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="httmcp",
-    version="0.1.0",
+    version="0.1.1",
     author="lloydzhou",
     author_email="lloydzhou@qq.com",  # 请替换为您的邮箱
     description="HTTP MCP Transport for Nchan",

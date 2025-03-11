@@ -67,14 +67,6 @@ class HTTMCP(FastMCP):
         router.add_api_route("/resources/templates/list", self.wrap_method(self.list_resource_templates_handler), methods=["POST"])
         router.add_api_route("/tools/list", self.wrap_method(self.list_tools_handler), methods=["POST"])
         router.add_api_route("/tools/call", self.wrap_method(self.call_tools_handler), methods=["POST"])
-        # TODO call sigle tool???
-        # for tool in self._tool_manager.list_tools():
-        #     def wrap_tool(tool):
-        #         async def wrap_call_tool(message: JSONRPCMessage, **kwargs):
-        #             return await self.call_tool(tool.name, message.root.params.get("arguments", {}))
-        #         return wrap_call_tool
-        #     router.add_api_route("/tools/call/{name}", self.wrap_method(wrap_tool(tool)), methods=["POST"])
-
         # empty response
         async def empty_response(message: JSONRPCMessage, **kwargs): 
             return ServerResult(EmptyResult())

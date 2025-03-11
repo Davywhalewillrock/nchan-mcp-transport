@@ -1,6 +1,11 @@
+import logging
 import asyncio
 from mcp.server.fastmcp import Context
-from httmcp import *
+from mcp.types import *
+from fastapi import FastAPI, Response
+from httmcp import HTTMCP, OpenAPIMCP
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 server = HTTMCP(

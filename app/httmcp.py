@@ -229,7 +229,6 @@ class OpenAPIMCP(HTTMCP):
         super().__init__(name, instructions, publish_server, api_prefix, **settings)
 
     async def list_tools_handler(self, message, **kwargs):
-        print("list_tools_handler", self.client.tools)
         return ListToolsResult(tools=[Tool(
             name=tool["function"].get('name', ''),
             description=tool["function"].get('description', ''),

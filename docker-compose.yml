@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  nchan:
+    image: lloydzhou/nchan
+    volumes:
+      - ./docker/nchan.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    volumes:
+      - ./app/app.py:/app/app.py
+    ports:
+      - "8000:8000"
+    restart: always

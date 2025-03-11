@@ -5,7 +5,9 @@ import uuid
 from typing import Any
 from fastapi import FastAPI, Header, Response
 from mcp.types import *
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.fastmcp.server import _convert_to_content
+from mcp.server.lowlevel.server import request_ctx, RequestContext
 import httpx
 from fastapi.routing import APIRouter
 
@@ -36,9 +38,14 @@ class HTTMCP(FastMCP):
                 "X-EventSource-Event": event,
             }
             try:
+                data = message
+                if isinstance(message, dict):
+                    data = json.dumps(message)
+                elif isinstance(message, BaseModel):
+                    data = message.model_dump_json()
                 response = await client.post(
                     f"{self._publish_server}/mcp/{self.name}/{channel_id}", 
-                    data=json.dumps(message) if event == "message" else message,
+                    data=data,
                     headers=headers
                 )
                 return response.status_code == 200
@@ -60,12 +67,12 @@ class HTTMCP(FastMCP):
         router.add_api_route("/tools/list", self.wrap_method(self.list_tools_handler), methods=["POST"])
         router.add_api_route("/tools/call", self.wrap_method(self.call_tools_handler), methods=["POST"])
         # TODO call sigle tool???
-        for tool in self._tool_manager.list_tools():
-            def wrap_tool(tool):
-                async def wrap_call_tool(message: JSONRPCMessage, **kwargs):
-                    return await self.call_tool(tool.name, message.root.params.get("arguments", {}))
-                return wrap_call_tool
-            router.add_api_route("/tools/call/{name}", self.wrap_method(wrap_tool(tool)), methods=["POST"])
+        # for tool in self._tool_manager.list_tools():
+        #     def wrap_tool(tool):
+        #         async def wrap_call_tool(message: JSONRPCMessage, **kwargs):
+        #             return await self.call_tool(tool.name, message.root.params.get("arguments", {}))
+        #         return wrap_call_tool
+        #     router.add_api_route("/tools/call/{name}", self.wrap_method(wrap_tool(tool)), methods=["POST"])
 
         # empty response
         async def empty_response(message: JSONRPCMessage, **kwargs): 
@@ -165,9 +172,40 @@ class HTTMCP(FastMCP):
         return ListToolsResult(tools=tools)
 
     async def call_tools_handler(self, message: JSONRPCMessage, **kwargs) -> CallToolResult:
+        content, isError = [], False
+        token = None
         try:
-            content = await super().call_tool(message.root.params.get('name', ''), message.root.params.get('arguments', {}))
-            return CallToolResult(content=list(content), isError=False)
-        except Exception as e:
-            logger.error(f"Error calling tool: {str(e)}")
-            return CallToolResult(content=[], isError=True)
+            validated_request = ClientRequest.model_validate(
+                message.root.model_dump(
+                    by_alias=True, mode="json", exclude_none=True
+                )
+            )
+            # Set our global state that can be retrieved via
+            # app.get_request_context()
+            meta = validated_request.root.params.meta if validated_request.root.params else None
+            # store session_id in meta
+            if meta:
+                meta.session_id = kwargs.get("session_id")
+            token = request_ctx.set(
+                RequestContext(
+                    message.root.id,
+                    meta,
+                    None,
+                    None,
+                )
+            )
+            name, arguments = message.root.params.get('name', ''), message.root.params.get('arguments', {})
+            context = self.get_context()
+            result = await self._tool_manager.call_tool(name, arguments, context=context)
+            if isinstance(result, Response):
+                return result
+            content = _convert_to_content(result)
+            # response = await handler(req)
+        except Exception as err:
+            isError = True
+            logger.error(f"Error calling tool: {str(err)}")
+        finally:
+            # Reset the global state after we are done
+            if token is not None:
+                request_ctx.reset(token)
+        return CallToolResult(content=list(content), isError=isError)

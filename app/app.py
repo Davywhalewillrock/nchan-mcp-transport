@@ -6,11 +6,6 @@ server = HTTMCP(
     publish_server="http://nchan:80",
 )
 
-
-logger.debug("Server started", server.router.routes)
-app.include_router(server.router)
-
-
 @server.tool()
 async def hello_world() -> str:
     return "Hello, world!"
@@ -23,6 +18,12 @@ async def add(a: int, b: int) -> int:
 def get_data() -> str:
     return "Hello, world!"
 
+
+logger.debug("Server started", server.router.routes)
+app.include_router(server.router)
+
+# can add more mcp servers here
+# app.include_router(server2.router)
 
 if __name__ == "__main__":
     import uvicorn

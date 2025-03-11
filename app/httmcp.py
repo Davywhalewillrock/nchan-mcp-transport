@@ -2,9 +2,7 @@ import base64
 import logging
 import json
 import uuid
-from typing import Any, Mapping
-# from starlette.responses import JSONResponse
-from starlette.background import BackgroundTask
+from typing import Any
 from fastapi import FastAPI, Header, Response
 from mcp.types import *
 from mcp.server.fastmcp import FastMCP
@@ -14,32 +12,8 @@ from fastapi.routing import APIRouter
 
 logger = logging.getLogger(__name__)
 
-class JSONResponse(Response):
-    media_type = "application/json"
 
-    def __init__(
-        self,
-        content: Any,
-        status_code: int = 200,
-        headers: Mapping[str, str] | None = None,
-        media_type: str | None = None,
-        background: BackgroundTask | None = None,
-    ) -> None:
-        super().__init__(content, status_code, headers, media_type, background)
 
-    def render(self, content: Any) -> bytes:
-        try:
-            return content.model_dump_json().encode("utf-8")
-        except Exception:
-            pass
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=None,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    
 class HTTMCP(FastMCP):
 
     def __init__(
@@ -53,18 +27,18 @@ class HTTMCP(FastMCP):
         self.api_prefix = api_prefix
         super().__init__(name, instructions, **settings)
 
-    async def publish_to_channel(self, channel_id: str, message: dict, envent: str = "message") -> bool:
+    async def publish_to_channel(self, channel_id: str, message: dict, event: str = "message") -> bool:
         """Publish a message to an nchan channel."""
         async with httpx.AsyncClient() as client:
             # In a real scenario, you'd need the actual URL of your nchan server
             headers = {
                 "Content-Type": "application/json",
-                "X-EventSource-Event": envent,
+                "X-EventSource-Event": event,
             }
             try:
                 response = await client.post(
                     f"{self._publish_server}/mcp/{self.name}/{channel_id}", 
-                    data=json.dumps(message) if envent == "message" else message,
+                    data=json.dumps(message) if event == "message" else message,
                     headers=headers
                 )
                 return response.status_code == 200
@@ -77,7 +51,6 @@ class HTTMCP(FastMCP):
         router = APIRouter(prefix=self.api_prefix if self.api_prefix else f"/mcp/{self.name}")
         router.add_api_route("/", self.start_session, methods=["GET"])
         router.add_api_route("/endpoint", self.send_endpoint, methods=["GET"])
-        router.add_api_route("/endpoint", self.return_endpoint, methods=["POST"])
         router.add_api_route("/initialize", self.wrap_method(self.initialize), methods=["POST"])
         router.add_api_route("/resources/list", self.wrap_method(self.list_resources_handler), methods=["POST"])
         router.add_api_route("/resources/read", self.wrap_method(self.read_resource_handler), methods=["POST"])
@@ -111,6 +84,8 @@ class HTTMCP(FastMCP):
             requst_id = message.root.id if hasattr(message.root, "id") else None
             try:
                 result = await method(message, session_id=x_mcp_session_id, transport=x_mcp_transport)
+                if isinstance(result, Response):
+                    return result
                 try:
                     result = result.model_dump(exclude_unset=True, exclude_none=True, by_alias=True)
                 except Exception as e:
@@ -149,9 +124,6 @@ class HTTMCP(FastMCP):
             }
         )
     
-    async def return_endpoint(self):
-        return Response(status_code=304)
-
     async def send_endpoint(
         self, x_mcp_session_id: Annotated[str | None, Header()] = None,
         x_mcp_transport: Annotated[str | None, Header()] = None,

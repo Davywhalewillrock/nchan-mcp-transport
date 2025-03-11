@@ -116,6 +116,87 @@ asyncio.run(create_openapi_mcp_server())
 
 这将把OpenAPI中定义的所有操作自动转换为MCP工具，可以通过MCP协议调用。
 
+## 使用OpenAPIMCP集成OpenAPI服务
+
+OpenAPIMCP允许您通过OpenAPI规范文件轻松创建MCP服务，从而将现有的RESTful API转换为可以通过MCP协议调用的服务。
+
+### 实现逻辑
+
+OpenAPIMCP读取OpenAPI规范文件，并将其中的每个API端点转换为一个MCP工具。当客户端通过MCP调用这些工具时，OpenAPIMCP会将请求转发到相应的RESTful API，并将响应转换回MCP格式。
+
+### 使用方式
+
+1.  **准备OpenAPI规范文件**：
+    确保您有一个有效的OpenAPI规范文件（例如，`openapi.json`）。
+
+2.  **创建OpenAPIMCP实例**：
+    在您的FastAPI应用中，使用`OpenAPIMCP.from_openapi`方法创建一个OpenAPIMCP实例。
+
+    ```python
+    async def create_openapi_mcp_server():
+        # OpenAPI规范文件URL
+        url = "https://example.com/api-spec.json"
+        # 创建OpenAPIMCP实例
+        openapi_server = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
+        # 挂载到FastAPI应用
+        app.include_router(openapi_server.router)
+
+    # 运行创建函数
+    asyncio.run(create_openapi_mcp_server())
+    ```
+
+3.  **挂载到FastAPI应用**：
+    将OpenAPIMCP实例的`router`挂载到您的FastAPI应用中，以便处理MCP请求。
+
+4.  **配置Nchan**：
+    确保您的Nchan配置正确，以便将MCP请求路由到FastAPI应用。
+
+### 示例
+
+以下是一个完整的示例，展示如何使用OpenAPIMCP将OpenAPI规范文件转换为MCP服务：
+
+```python
+from fastapi import FastAPI
+import asyncio
+from app.httmcp import OpenAPIMCP
+
+app = FastAPI()
+
+async def create_openapi_mcp_server():
+    # OpenAPI规范文件URL
+    url = "https://petstore3.swagger.io/api/v3/openapi.json"
+    # 创建OpenAPIMCP实例
+    openapi_server = await OpenAPIMCP.from_openapi(url, publish_server="http://localhost:80")
+    # 挂载到FastAPI应用
+    app.include_router(openapi_server.router)
+
+# 运行创建函数
+asyncio.run(create_openapi_mcp_server())
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+在这个例子中，我们使用了一个来自Swagger Petstore的OpenAPI规范文件。您可以将其替换为您自己的OpenAPI规范文件URL。
+
+### 客户端调用
+
+一旦OpenAPIMCP服务器启动并运行，您可以使用MCP客户端调用OpenAPI中定义的任何操作。例如，如果您的OpenAPI规范中定义了一个名为`getPetById`的操作，您可以使用以下MCP请求来调用它：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "getPetById",
+  "params": {
+    "petId": 123
+  },
+  "id": "1"
+}
+```
+
+请确保您的MCP客户端配置正确，以便将请求发送到OpenAPIMCP服务器的`/mcp/{server_name}/tools/call`端点。
+
 #### 客户端集成
 
 在你的客户端代码中:

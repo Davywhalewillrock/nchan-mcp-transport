@@ -41,6 +41,11 @@ Nchan-MCP-Transport是一个中间件服务，通过整合Nginx的Nchan模块与
 
 ## 快速开始
 
+可以使用pip 安装依赖本地使用:
+```bash
+pip install httmcp
+```
+
 ### 安装部署
 
 1. 克隆项目:
@@ -50,13 +55,7 @@ git clone https://github.com/yourusername/nchan-mcp-transport.git
 cd nchan-mcp-transport
 ```
 
-2. 安装依赖:
-
-```bash
-pip install httmcp
-```
-
-3. 启动服务:
+2. 启动服务:
 
 ```bash
 docker-compose up -d
@@ -164,7 +163,7 @@ OpenAPIMCP读取OpenAPI规范文件，并将其中的每个API端点转换为一
 ```python
 from fastapi import FastAPI
 import asyncio
-from app.httmcp import OpenAPIMCP
+from httmcp import OpenAPIMCP
 
 app = FastAPI()
 
@@ -209,14 +208,19 @@ if __name__ == "__main__":
 
 ```javascript
 // WebSocket 示例
-const ws = new WebSocket('ws://localhost:80/mcp/httmcp/SESSION_ID');
+const ws = new WebSocket('ws://localhost:80/mcp/httmcp');
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
   console.log('收到消息:', data);
 };
 
 // SSE 示例
-const eventSource = new EventSource('http://localhost:80/mcp/httmcp/SESSION_ID');
+const eventSource = new EventSource('http://localhost:80/mcp/httmcp');
+let sessionURI
+eventSource.addEventListener("endpoint", (event) => {
+    sessionURI = event.data
+    console.log(sessionURI)
+})
 eventSource.onmessage = (event) => {
   const data = JSON.parse(event.data);
   console.log('收到消息:', data);

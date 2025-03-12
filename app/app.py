@@ -4,6 +4,8 @@ from mcp.server.fastmcp import Context
 from mcp.types import *
 from fastapi import FastAPI, Response
 from httmcp import HTTMCP, OpenAPIMCP
+import nest_asyncio
+nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 

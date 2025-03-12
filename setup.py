@@ -5,13 +5,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="httmcp",
-    version="0.1.1",
+    version="0.1.2",
     author="lloydzhou",
-    author_email="lloydzhou@qq.com",  # 请替换为您的邮箱
+    author_email="lloydzhou@qq.com",
     description="HTTP MCP Transport for Nchan",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/conechoai/nchan-mcp-transport",  # 请替换为您的GitHub仓库URL
+    url="https://github.com/conechoai/nchan-mcp-transport",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -231,8 +231,8 @@ class OpenAPIMCP(HTTMCP):
         # ignore context
         return await self.client(name, **arguments)
 
-    @staticmethod
-    async def from_openapi(definition: str, publish_server: str) -> "OpenAPIMCP":
+    @classmethod
+    async def from_openapi(cls, definition: str, publish_server: str) -> "OpenAPIMCP":
         api = OpenAPIClient(definition=definition)
         client = await api.init()
-        return OpenAPIMCP(api, client, publish_server)
+        return cls(api, client, publish_server)

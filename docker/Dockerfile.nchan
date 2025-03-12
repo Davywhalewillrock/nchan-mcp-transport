@@ -1,0 +1,9 @@
+FROM alpine
+
+RUN apk update && apk add --no-cache nginx nginx-mod-http-nchan
+
+ADD docker/nchan.conf /etc/nginx/http.d/default.conf
+
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/nginx/error.log
+
+CMD ["nginx", "-g", "daemon off;"]

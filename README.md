@@ -4,7 +4,7 @@ A high-performance MCP (Model Control Protocol) transport layer implementation b
 
 ## Project Overview
 
-Nchan-MCP-Transport is a middleware service that integrates Nginx's Nchan module with a FastAPI backend to deliver a high-performance and stable transport implementation for the MCP protocol. It addresses long-connection management, message pub/sub, and high-concurrency communication challenges in AI model services.
+Nchan-MCP-Transport is a middleware service that not only provides a high-performance MCP transport layer—with support for WebSocket and Server-Sent Events for reliable AI model communication—but also functions as a gateway for request routing and protocol adaptation. Additionally, this project includes the Python library httmcp (HyperText Transfer Model Control Protocol) to simplify the development and integration of MCP tools.
 
 ## Features
 

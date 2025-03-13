@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-Nchan-MCP-Transport是一个中间件服务，通过整合Nginx的Nchan模块与FastAPI后端，为MCP协议提供高性能、稳定的传输层实现。它解决了AI模型服务长连接管理、消息发布订阅以及高并发场景下的通信问题。
+Nchan-MCP-Transport是一个中间件服务，既提供高性能的MCP传输层，也兼具网关功能。通过整合Nginx的Nchan模块与FastAPI后端，不仅为MCP协议提供稳定的传输，还兼顾请求路由和协议适配。同时，本项目内置了Python库 httmcp (HyperText Transfer Model Control Protocol)，用于简化MCP工具的开发与集成。
 
 ## 特性
 

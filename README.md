@@ -39,6 +39,36 @@ Nchan-MCP-Transport是一个中间件服务，通过整合Nginx的Nchan模块与
 - **容器化**: Docker
 - **通信协议**: MCP (Model Control Protocol)
 
+
+## 流程图
+1. 其中session_id（直接等同nchan_channel_id）会从创建连接开始一直到连接结束一直保持
+2. 如果是执行时间短的任务，可以直接返回
+3. 如果是执行时间长的任务，可以放到异步的队列执行，只需要中间推送进度，以及最后推送结果即可
+
+
+```mermaid
+sequenceDiagram
+  MCP Client->>NCNAN: connect
+  activate NCNAN
+  MCP Client-->>NCNAN: jsonrpc request
+  NCNAN-->>FastAPI: nchan_publisher_upstream_request
+  FastAPI-->>MCP Server: call_tool(name, args)
+  MCP Server-->>FastAPI: result
+  FastAPI-->>NCNAN: jsonrpc response
+  NCNAN-->> MCP Client: jsonrpc response
+  
+  MCP Client-->>NCNAN: jsonrpc request
+  NCNAN-->>FastAPI: nchan_publisher_upstream_request
+  FastAPI-->>MCP Server: call_tool(name, args) in backend
+  MCP Server-->>NCNAN: push notification
+  NCNAN-->> MCP Client: notification
+  MCP Server-->>NCNAN: push jsonrpc response
+  NCNAN-->> MCP Client: jsonrpc response
+  NCNAN->> MCP Client: close
+  deactivate NCNAN
+```
+
+
 ## 快速开始
 
 可以使用pip 安装依赖本地使用:

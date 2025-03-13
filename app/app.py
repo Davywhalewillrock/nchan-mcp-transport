@@ -61,12 +61,12 @@ app.include_router(server.router)
 async def create_openapi_mcp_server():
     url = "https://ghfast.top/https://raw.githubusercontent.com/lloydzhou/openapiclient/refs/heads/main/examples/jinareader.json"
     server1 = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
-    logger.debug("Server1 started %r", server1.router.routes)
+    logger.info("Server1 started %r", server1.router.routes)
     app.include_router(server1.router)
 
     url = "https://ghfast.top/https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/notion.com/1.0.0/openapi.yaml"
     server2 = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
-    logger.error("Server1 started %r", server2.router.routes)
+    logger.info("Server1 started %r", server2.router.routes)
     app.include_router(server2.router)
 
 asyncio.run(create_openapi_mcp_server())

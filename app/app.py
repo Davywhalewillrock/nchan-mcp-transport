@@ -8,11 +8,12 @@ import nest_asyncio
 nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
+publish_server = "http://nchan:8000"
 
 app = FastAPI()
 server = HTTMCP(
     "httmcp",
-    publish_server="http://nchan:80",
+    publish_server=publish_server,
 )
 
 @server.tool()
@@ -60,12 +61,12 @@ app.include_router(server.router)
 
 async def create_openapi_mcp_server():
     url = "https://ghfast.top/https://raw.githubusercontent.com/lloydzhou/openapiclient/refs/heads/main/examples/jinareader.json"
-    server1 = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
+    server1 = await OpenAPIMCP.from_openapi(url, publish_server=publish_server)
     logger.info("Server1 started %r", server1.router.routes)
     app.include_router(server1.router)
 
     url = "https://ghfast.top/https://raw.githubusercontent.com/APIs-guru/openapi-directory/refs/heads/main/APIs/notion.com/1.0.0/openapi.yaml"
-    server2 = await OpenAPIMCP.from_openapi(url, publish_server="http://nchan:80")
+    server2 = await OpenAPIMCP.from_openapi(url, publish_server=publish_server)
     logger.info("Server1 started %r", server2.router.routes)
     app.include_router(server2.router)
 

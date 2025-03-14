@@ -2,17 +2,17 @@ version: "3"
 
 services:
   nchan:
-    # image: lloydzhou/nchan
     build:
       context: .
       dockerfile: docker/Dockerfile.nchan
     volumes:
-      - ./docker/nchan.conf:/etc/nginx/http.d/default.conf
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./docker/nchan.conf:/etc/nginx/http.d/mcp.conf
     ports:
-      - "80:80"
+      - "80:8000"
     restart: always
 
-  backend:
+  app:
     build:
       context: .
       dockerfile: docker/Dockerfile.python
@@ -20,4 +20,6 @@ services:
       - ./app/app.py:/app/app.py
     ports:
       - "8000:8000"
+    environment:
+      - VIRTUAL_HOST=app.mcp.io
     restart: always

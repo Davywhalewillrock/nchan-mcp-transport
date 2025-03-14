@@ -23,5 +23,11 @@ services:
     ports:
       - "8000"
     environment:
-      - VIRTUAL_HOST=NotionAPIMCP100.mcp.io,JinaURLContentReaderMCPv100.mcp.io,httmcp.mcp.io
+      - VIRTUAL_HOST=notion.mcp.io,httmcp.mcp.io
     restart: always
+
+  jinareader:
+    extends:
+      service: app
+    environment:
+      - VIRTUAL_HOST=jinareader.mcp.io

@@ -209,15 +209,22 @@ class HTTMCP(FastMCP):
 
 
 class OpenAPIMCP(HTTMCP):
-    def __init__(self, api: OpenAPIClient, client: Any, publish_server: str | None = None, api_prefix: str = "", **settings: Any):
+    def __init__(
+        self, api: OpenAPIClient, client: Any,
+        name: str | None = None,
+        publish_server: str | None = None,
+        api_prefix: str = "",
+        **settings: Any,
+    ):
         self.api = api
         self.client = client
-        api_title = api.definition.get('info', {}).get('title', '')
-        # Replace spaces, hyphens, dots and other special characters
-        api_version = api.definition.get('info', {}).get('version', '')
         instructions = api.definition.get('info', {}).get('description', '')
-        name = f"{api_title}MCP_{api_version}" if api_version else f"{api_title}"
-        name = ''.join(c for c in name if c.isalnum())
+        if not name:
+            api_title = api.definition.get('info', {}).get('title', '')
+            api_version = api.definition.get('info', {}).get('version', '')
+            name = f"{api_title}MCP_{api_version}" if api_version else f"{api_title}"
+            # Replace spaces, hyphens, dots and other special characters
+            name = ''.join(c for c in name if c.isalnum())
         super().__init__(name, instructions, publish_server, api_prefix, **settings)
 
     async def list_tools_handler(self, message, **kwargs):
@@ -232,7 +239,7 @@ class OpenAPIMCP(HTTMCP):
         return await self.client(name, **arguments)
 
     @classmethod
-    async def from_openapi(cls, definition: str, publish_server: str) -> "OpenAPIMCP":
+    async def from_openapi(cls, definition: str, name: str | None = None, publish_server: str | None = None) -> "OpenAPIMCP":
         api = OpenAPIClient(definition=definition)
         client = await api.init()
-        return cls(api, client, publish_server)
+        return cls(api, client, name=name, publish_server=publish_server)

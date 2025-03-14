@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile.nchan
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./docker/nchan.conf:/etc/nginx/http.d/mcp.conf
+      - ./docker/nchan.conf:/etc/nginx/conf.d/mcp.conf
     ports:
       - "80:8000"
     restart: always
@@ -19,7 +19,7 @@ services:
     volumes:
       - ./app/app.py:/app/app.py
     ports:
-      - "8000:8000"
+      - "8000"
     environment:
-      - VIRTUAL_HOST=app.mcp.io
+      - VIRTUAL_HOST=NotionAPIMCP100.mcp.io,JinaURLContentReaderMCPv100.mcp.io,httmcp.mcp.io
     restart: always

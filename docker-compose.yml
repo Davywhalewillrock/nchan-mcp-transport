@@ -7,9 +7,11 @@ services:
       dockerfile: docker/Dockerfile.nchan
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./docker/nchan.conf:/etc/nginx/conf.d/mcp.conf
+      - ./docker/nchan.conf:/etc/nginx/conf.d/nchan.conf
     ports:
-      - "80:8000"
+      - "80:80"
+    environment:
+      - HTTP_PORT=8000  # set default HTTP port, then nchan.conf can using 80
     restart: always
 
   app:

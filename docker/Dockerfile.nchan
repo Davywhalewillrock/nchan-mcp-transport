@@ -46,5 +46,7 @@ COPY --from=nginx-proxy /etc/nginx/network_internal.conf /etc/nginx/
 COPY --from=nginx-proxy /app /app
 WORKDIR /app/
 
+COPY docker/nchan.conf /etc/nginx/conf.d/nchan.conf
+
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["forego", "start", "-r"]

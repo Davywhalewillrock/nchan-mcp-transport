@@ -8,7 +8,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
-publish_server = "http://nchan:8000"
+publish_server = "http://nchan:80"
 
 app = FastAPI()
 server = HTTMCP(

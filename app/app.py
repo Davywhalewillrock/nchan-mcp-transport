@@ -79,12 +79,13 @@ async def create_openapi_mcp_server():
     from openapiclient import OpenAPIClient
     class NotionAPI(OpenAPIMCP):
         def __init__(self, api: OpenAPIClient, name: str | None = None, publish_server: str | None = None, api_prefix: str = "", **settings: Any):
-            super().__init__(api, None, name, publish_server, api_prefix, **settings)
+            client = api.Client().__enter__()
+            super().__init__(api, client, name, publish_server, api_prefix, **settings)
 
-        async def call_tool_with_context(self, name, arguments, ctx):
+        async def call_tool_with_context(self, name, arguments, context):
             # get user api key from context
             # context.client_id
-            session_id = ctx.request_context.meta.session_id
+            session_id = context.request_context.meta.session_id
             api_key = "" # get api key from session_id
             async with self.api.AsyncClient(headers={"Authorization": f"Bearer {api_key}"}) as client:
                 return await client(name, arguments)

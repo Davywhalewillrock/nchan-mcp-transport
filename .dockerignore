@@ -1,0 +1,9 @@
+dist
+build
+data
+httmcp
+.env
+.env.template
+docker-compose.yml
+*.py
+*.md

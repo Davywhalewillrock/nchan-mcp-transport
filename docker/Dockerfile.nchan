@@ -1,9 +1,52 @@
+# syntax=docker/dockerfile:1
+# https://github.com/nginx-proxy/nginx-proxy/blob/main/Dockerfile.alpine
+
+FROM docker.io/nginxproxy/docker-gen:0.14.5 AS docker-gen
+
+FROM docker.io/nginxproxy/forego:0.18.2 AS forego
+
+FROM jwilder/nginx-proxy:alpine as nginx-proxy
+
+# Build the final image
+# FROM docker.io/library/nginx:1.26.2-alpine
+
 FROM alpine
 
-RUN apk update && apk add --no-cache nginx nginx-mod-http-nchan
+ARG NGINX_PROXY_VERSION
+# Add DOCKER_GEN_VERSION environment variable because 
+# acme-companion rely on it (but the actual value is not important)
+ARG DOCKER_GEN_VERSION="unknown"
+ENV NGINX_PROXY_VERSION=${NGINX_PROXY_VERSION} \
+   DOCKER_GEN_VERSION=${DOCKER_GEN_VERSION} \
+   DOCKER_HOST=unix:///tmp/docker.sock
 
-ADD docker/nchan.conf /etc/nginx/http.d/default.conf
+# Install dependencies
+RUN apk add --no-cache --virtual .run-deps bash openssl nginx nginx-mod-http-nchan
 
-RUN ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/nginx/error.log
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=nginx-proxy /etc/nginx/nginx.conf /etc/nginx/
+
+# Configure Nginx
+# prepend include modules/*.conf; to nginx.conf
+RUN sed -i 's/worker_processes/include\ modules\/*.conf;\nworker_processes/' /etc/nginx/nginx.conf \
+   && mkdir -p '/etc/nginx/toplevel.conf.d' \
+   && mkdir -p '/etc/nginx/dhparam' \
+   && mkdir -p '/etc/nginx/certs' \
+   && mkdir -p '/usr/share/nginx/html/errors' \
+   && mkdir -p '/etc/nginx/conf.d'
+
+# Install Forego + docker-gen
+COPY --from=forego /usr/local/bin/forego /usr/local/bin/forego
+COPY --from=docker-gen /usr/local/bin/docker-gen /usr/local/bin/docker-gen
+
+
+COPY --from=nginx-proxy /etc/nginx/network_internal.conf /etc/nginx/
+
+# COPY app nginx.tmpl LICENSE /app/
+COPY --from=nginx-proxy /app /app
+WORKDIR /app/
+
+COPY docker/nchan.conf /etc/nginx/conf.d/nchan.conf
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["forego", "start", "-r"]

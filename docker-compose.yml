@@ -2,22 +2,32 @@ version: "3"
 
 services:
   nchan:
-    # image: lloydzhou/nchan
     build:
       context: .
       dockerfile: docker/Dockerfile.nchan
     volumes:
-      - ./docker/nchan.conf:/etc/nginx/http.d/default.conf
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./docker/nchan.conf:/etc/nginx/conf.d/nchan.conf
     ports:
       - "80:80"
+    environment:
+      - HTTP_PORT=8000  # set default HTTP port, then nchan.conf can using 80
     restart: always
 
-  backend:
+  app:
     build:
       context: .
       dockerfile: docker/Dockerfile.python
     volumes:
       - ./app/app.py:/app/app.py
     ports:
-      - "8000:8000"
+      - "8000"
+    environment:
+      - VIRTUAL_HOST=notion.mcp.io,notion_user.mcp.io,httmcp.mcp.io
     restart: always
+
+  jinareader:
+    extends:
+      service: app
+    environment:
+      - VIRTUAL_HOST=jinareader.mcp.io

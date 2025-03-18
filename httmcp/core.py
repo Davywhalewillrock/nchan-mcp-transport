@@ -209,22 +209,29 @@ class HTTMCP(FastMCP):
 
 
 class OpenAPIMCP(HTTMCP):
-    def __init__(self, api: OpenAPIClient, client: Any, publish_server: str | None = None, api_prefix: str = "", **settings: Any):
+    def __init__(
+        self, api: OpenAPIClient, client: Any,
+        name: str | None = None,
+        publish_server: str | None = None,
+        api_prefix: str = "",
+        **settings: Any,
+    ):
         self.api = api
         self.client = client
-        api_title = api.definition.get('info', {}).get('title', '')
-        # Replace spaces, hyphens, dots and other special characters
-        api_version = api.definition.get('info', {}).get('version', '')
         instructions = api.definition.get('info', {}).get('description', '')
-        name = f"{api_title}MCP_{api_version}" if api_version else f"{api_title}"
-        name = ''.join(c for c in name if c.isalnum())
+        if not name:
+            api_title = api.definition.get('info', {}).get('title', '')
+            api_version = api.definition.get('info', {}).get('version', '')
+            name = f"{api_title}MCP_{api_version}" if api_version else f"{api_title}"
+            # Replace spaces, hyphens, dots and other special characters
+            name = ''.join(c for c in name if c.isalnum())
         super().__init__(name, instructions, publish_server, api_prefix, **settings)
 
-    async def list_tools_handler(self, message, **kwargs):
+    async def list_tools_handler(self, message, **kwargs):  # type: ignore
         return ListToolsResult(tools=[Tool(
             name=tool["function"].get('name', ''),
             description=tool["function"].get('description', ''),
-            inputSchema=tool["function"].get('parameters', {}),  # 这里只是名字不一样
+            inputSchema=tool["function"].get('parameters', {}),
         ) for tool in self.client.tools])
 
     async def call_tool_with_context(self, name: str, arguments: dict, context: Context) -> Any:
@@ -232,7 +239,17 @@ class OpenAPIMCP(HTTMCP):
         return await self.client(name, **arguments)
 
     @classmethod
-    async def from_openapi(cls, definition: str, publish_server: str) -> "OpenAPIMCP":
+    async def from_openapi(cls, definition: str, name: str | None = None, publish_server: str | None = None, **kwargs) -> "OpenAPIMCP":
+        """
+        Create an MCP server from an OpenAPI definition.
+
+        :param definition: The OpenAPI definition as a string.
+        :param name: The name of the MCP server.
+        :param publish_server: The URL of the Nchan server for publishing messages.
+        :param kwargs: Additional settings for the MCP server (passed to httox.AsyncClient).
+        :return: An instance of OpenAPIMCP.
+        """
         api = OpenAPIClient(definition=definition)
-        client = await api.init()
-        return cls(api, client, publish_server)
+        # pass the timeout, proxies, etc. to the client
+        client = await api.AsyncClient(**kwargs).__aenter__()  # type: ignore
+        return cls(api, client, name=name, publish_server=publish_server)

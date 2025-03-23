@@ -49,7 +49,7 @@ MCP lets AI assistants like **Claude** talk to external tools. But:
 
 ## 🚀 Quickstart
 
-### 📦 1. Install client SDK
+### 📦 1. Install server SDK
 
 ```bash
 pip install httmcp

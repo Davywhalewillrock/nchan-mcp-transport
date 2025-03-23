@@ -49,7 +49,7 @@ MCP允许AI助手（如**Claude**）与外部工具通信。但是：
 
 ## 🚀 快速开始
 
-### 📦 1. 安装客户端SDK
+### 📦 1. 安装服务端SDK
 
 ```bash
 pip install httmcp

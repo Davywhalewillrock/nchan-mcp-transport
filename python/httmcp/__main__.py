@@ -7,7 +7,10 @@ from fastapi import FastAPI
 from httmcp import OpenAPIMCP
 
 
-parser = argparse.ArgumentParser(description="HTTMCP CLI - Deploy OpenAPI services with Nchan MCP Transport")
+parser = argparse.ArgumentParser(
+    prog="httmcp",
+    description="HTTMCP CLI - Deploy OpenAPI services with Nchan MCP Transport",
+)
 parser.add_argument("-f", "--openapi-file", required=True, help="OpenAPI specification URL or file path")
 parser.add_argument("-n", "--name", default="", help="Name of this MCP server (default: '')")
 parser.add_argument("-p", "--publish-server", required=True, help="Nchan publish server URL (e.g., http://nchan:80)")

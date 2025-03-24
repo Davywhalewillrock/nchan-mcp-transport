@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import argparse
 from contextlib import asynccontextmanager
-import sys
 import uvicorn
 from fastapi import FastAPI
 from httmcp import OpenAPIMCP

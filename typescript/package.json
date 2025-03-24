@@ -1,0 +1,21 @@
+{
+  "name": "httmcp",
+  "version": "1.0.0",
+  "description": "HTTP MCP Transport for Nchan - TypeScript SDK",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly",
+    "watch": "vite",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^2.6.4",
+    "typescript": "^4.4.4",
+    "vite-plugin-dts": "^1.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -78,12 +78,12 @@ class HTTMCP(FastMCP):
     def wrap_method(self, method):
         async def wrapper(
             message: JSONRPCMessage,
-            x_mcp_session_id: Annotated[str | None, Header()] = None,
-            x_mcp_transport: Annotated[str | None, Header()] = None,
+            mcp_session_id: Annotated[str | None, Header()] = None,
+            mcp_transport: Annotated[str | None, Header()] = None,
         ):
             requst_id = message.root.id if hasattr(message.root, "id") else None
             try:
-                result = await method(message, session_id=x_mcp_session_id, transport=x_mcp_transport)
+                result = await method(message, session_id=mcp_session_id, transport=mcp_transport)
                 if isinstance(result, Response):
                     return result
                 try:
@@ -126,11 +126,11 @@ class HTTMCP(FastMCP):
         )
     
     async def send_endpoint(
-        self, x_mcp_session_id: Annotated[str | None, Header()] = None,
-        x_mcp_transport: Annotated[str | None, Header()] = None,
+        self, mcp_session_id: Annotated[str | None, Header()] = None,
+        mcp_transport: Annotated[str | None, Header()] = None,
     ):
-        if x_mcp_transport == "sse":
-            await self.publish_to_channel(x_mcp_session_id, f"/mcp/{self.name}/{x_mcp_session_id}", "endpoint")
+        if mcp_transport == "sse":
+            await self.publish_to_channel(mcp_session_id, f"/mcp/{self.name}/{mcp_session_id}", "endpoint")
 
     async def list_resources_handler(self, message: JSONRPCMessage, **kwargs) -> ListResourcesResult:
         resources = await super().list_resources()

@@ -43,3 +43,27 @@ mcp_server = await OpenAPIMCP.from_openapi(
 app = FastAPI()
 app.include_router(mcp_server.router)
 ```
+
+## Command Line Interface
+
+HTTMCP provides a CLI to quickly deploy OpenAPI services with Nchan MCP Transport:
+
+```bash
+# Basic usage
+python -m httmcp -f openapi.json -p http://nchan:80
+
+# Advanced usage with all options
+python -m httmcp \
+  --openapi-file openapi.json \
+  --name "my-openapi-service" \
+  --publish-server http://nchan:80 \
+  --host 0.0.0.0 \
+  --port 8080 \
+```
+
+CLI arguments:
+- `-f, --openapi-file`: OpenAPI specification file path or URL (required)
+- `-n, --name`: Name for the MCP server (default: derived from OpenAPI)
+- `-p, --publish-server`: Nchan publish server URL (required)
+- `-H, --host`: Host to bind the server (default: 0.0.0.0)
+- `-P, --port`: Port to bind the server (default: 8000)

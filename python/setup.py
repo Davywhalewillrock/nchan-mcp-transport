@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="httmcp",
-    version="0.2.0",
+    version="0.2.1",
     author="lloydzhou",
     author_email="lloydzhou@qq.com",
     description="HTTP MCP Transport for Nchan",
@@ -28,4 +28,15 @@ setup(
         "openapi-httpx-client>=0.4.1",
         "mcp>=1.3.0",
     ],
+    extras_require={
+        "cli": [
+            "uvicorn>=0.22.0",
+            "argparse>=1.4.0",
+        ],
+    },
+    entry_points={
+        "console_scripts": [
+            "httmcp=httmcp.__main__:main",
+        ],
+    },
 )

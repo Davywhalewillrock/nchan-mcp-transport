@@ -78,6 +78,18 @@ openapi_server = await OpenAPIMCP.from_openapi("https://example.com/openapi.json
 app.include_router(openapi_server.router)
 ```
 
+### 🖥️ 5. One-Click GPTs Actions to MCP Deployment
+
+HTTMCP provides a powerful CLI for instant deployment of GPTs Actions to MCP servers:
+
+```bash
+# Installation
+pip install httmcp[cli]
+
+# One-click deployment from GPTs Actions OpenAPI spec
+python -m httmcp -f gpt_actions_openapi.json -p http://nchan:80
+```
+
 ---
 
 ## 📚 Use Cases

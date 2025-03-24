@@ -43,3 +43,30 @@ mcp_server = await OpenAPIMCP.from_openapi(
 app = FastAPI()
 app.include_router(mcp_server.router)
 ```
+
+## One-Click GPTs Actions to MCP Deployment
+
+HTTMCP provides a powerful CLI for instant deployment of GPTs Actions to MCP servers:
+
+```bash
+# Installation
+pip install httmcp[cli]
+
+# One-click deployment from GPTs Actions OpenAPI spec
+python -m httmcp -f gpt_actions_openapi.yml -p http://nchan:80
+
+# Complete deployment with custom configuration
+python -m httmcp \
+  --openapi-file gpt_actions_openapi.yml \
+  --name "my-gpts-service" \
+  --publish-server http://nchan:80 \
+  --host 0.0.0.0 \
+  --port 8080
+```
+
+CLI options:
+- `-f, --openapi-file`: OpenAPI specification file path or URL (required)
+- `-p, --publish-server`: Nchan publish server URL for MCP transport (required)
+- `-n, --name`: Custom name for your MCP server (default: derived from OpenAPI)
+- `-H, --host`: Host address to bind the server (default: 0.0.0.0)
+- `-P, --port`: Local port number for accessing your deployed MCP service (default: 8000)

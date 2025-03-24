@@ -5,5 +5,5 @@ httmcp
 .env
 .env.template
 docker-compose.yml
-*.py
+*.pyc
 *.md

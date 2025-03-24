@@ -49,6 +49,9 @@ app.include_router(mcp_server.router)
 HTTMCP provides a CLI to quickly deploy OpenAPI services with Nchan MCP Transport:
 
 ```bash
+# Installation
+pip install httmcp[cli]
+
 # Basic usage
 python -m httmcp -f openapi.json -p http://nchan:80
 

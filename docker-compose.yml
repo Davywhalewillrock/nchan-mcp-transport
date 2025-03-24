@@ -19,7 +19,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.python
     volumes:
-      - ./python/app/app.py:/app/app.py
+      - ./python/examples/app.py:/app/app.py
     ports:
       - "8000"
     environment:

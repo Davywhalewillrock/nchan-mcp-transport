@@ -19,6 +19,7 @@ export class HTTMCP extends McpServer {
     constructor(serverInfo: HTTMCPImplementation, options?: ServerOptions) {
         const { publishServer, apiPrefix, ...restServerInfo } = serverInfo;
         super(restServerInfo, options);
+        this.name = serverInfo.name;
         this.publishServer = publishServer;
         this.apiPrefix = apiPrefix || "";
     }

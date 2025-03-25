@@ -4,7 +4,8 @@ import { McpServer,  } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
 import { ErrorCode, Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-
+import OpenAPIClientAxios, { OpenAPIClient } from 'openapi-client-axios';
+import z from 'zod';
 
 type HTTMCPImplementation = Implementation & {
     publishServer?: string;
@@ -177,6 +178,38 @@ export class HTTMCP extends McpServer {
             id: req.body?.id || "",
             result: {}
         });
+    }
+}
+
+
+type OpenAPIHTTMCPImplementation = HTTMCPImplementation & {
+    definition: string;
+};
+
+
+export class OpenAPIMCP extends HTTMCP {
+
+    private api: OpenAPIClientAxios;
+    private client: OpenAPIClient
+
+    constructor(serverInfo: OpenAPIHTTMCPImplementation, options?: ServerOptions) {
+        const { definition, ...restServerInfo } = serverInfo;
+        super(restServerInfo, options);
+        this.api = new OpenAPIClientAxios({ definition });
+        this.client = this.api.initSync();
+
+        for (const operation of this.api.getOperations()) {
+            const { operationId, description, parameters, requestBody } = operation;
+            if (operationId) {
+                // @ts-ignore
+                this._registeredTools[operationId] = {
+                    description,
+                    // TODO need zod object for parameters
+                    inputSchema: { ...parameters, body: requestBody },
+                    callback: this.client[operationId].bind(this.client),
+                };
+            }
+        }
     }
 }
 

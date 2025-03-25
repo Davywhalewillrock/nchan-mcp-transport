@@ -57,6 +57,7 @@ class HTTMCP(FastMCP):
     @property
     def router(self) -> APIRouter:
         router = APIRouter(prefix=self.api_prefix if self.api_prefix else f"/mcp/{self.name}")
+        router.get("/", self.start_session)
         router.add_api_route("/", self.start_session, methods=["GET"])
         router.add_api_route("/endpoint", self.send_endpoint, methods=["GET"])
         router.add_api_route("/initialize", self.wrap_method(self.initialize), methods=["POST"])
@@ -73,6 +74,7 @@ class HTTMCP(FastMCP):
         router.add_api_route("/ping", self.wrap_method(empty_response), methods=["POST"])
         router.add_api_route("/notifications/initialized", self.wrap_method(empty_response), methods=["POST"])
         router.add_api_route("/notifications/cancelled", self.wrap_method(empty_response), methods=["POST"])
+        router
         return router
 
     def wrap_method(self, method):
@@ -83,9 +85,9 @@ class HTTMCP(FastMCP):
             x_mcp_transport: Annotated[str | None, Header()] = None,
         ):
             requst_id = message.root.id if hasattr(message.root, "id") else None
-            mcp_session_id = mcp_session_id or x_mcp_session_id
+            x_mcp_session_id = x_mcp_session_id or mcp_session_id
             try:
-                result = await method(message, session_id=mcp_session_id, transport=x_mcp_transport)
+                result = await method(message, session_id=x_mcp_session_id, transport=x_mcp_transport)
                 if isinstance(result, Response):
                     return result
                 try:
@@ -128,8 +130,7 @@ class HTTMCP(FastMCP):
         )
     
     async def send_endpoint(
-        self,
-        x_mcp_session_id: Annotated[str | None, Header()] = None,
+        self, x_mcp_session_id: Annotated[str | None, Header()] = None,
         x_mcp_transport: Annotated[str | None, Header()] = None,
     ):
         if x_mcp_transport == "sse":

@@ -79,9 +79,11 @@ class HTTMCP(FastMCP):
         async def wrapper(
             message: JSONRPCMessage,
             x_mcp_session_id: Annotated[str | None, Header()] = None,
+            mcp_session_id: Annotated[str | None, Header()] = None,  # streamable http transport using this header
             x_mcp_transport: Annotated[str | None, Header()] = None,
         ):
             requst_id = message.root.id if hasattr(message.root, "id") else None
+            x_mcp_session_id = x_mcp_session_id or mcp_session_id
             try:
                 result = await method(message, session_id=x_mcp_session_id, transport=x_mcp_transport)
                 if isinstance(result, Response):

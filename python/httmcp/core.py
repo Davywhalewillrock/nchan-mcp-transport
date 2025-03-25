@@ -74,9 +74,11 @@ class HTTMCP(FastMCP):
         self,
         message: JSONRPCMessage,
         x_mcp_session_id: Annotated[str | None, Header()] = None,
+        mcp_session_id: Annotated[str | None, Header()] = None,  # streamable http transport using this header
     ):
         token = None
         jsonrpc_response = None
+
         try:
             requst_id = message.root.id if hasattr(message.root, "id") else None
             validated_request = ClientRequest.model_validate(
@@ -89,7 +91,7 @@ class HTTMCP(FastMCP):
             meta = validated_request.root.params.meta if validated_request.root.params else None
             # store session_id in meta
             if meta:
-                meta.session_id = x_mcp_session_id
+                meta.session_id = x_mcp_session_id or mcp_session_id
             token = request_ctx.set(
                 RequestContext(
                     message.root.id,

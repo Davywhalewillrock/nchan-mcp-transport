@@ -119,9 +119,6 @@ class HTTMCP(FastMCP):
                 if not handler:
                     raise Exception(f"Handler not found for request of type {typ.__name__}")
                 response = await handler(validated_request.root)
-                logger.warning(f"handler: {handler}")
-                logger.warning(f"Request: {validated_request}")
-                logger.warning(f"Response: {response}")
 
             if response is not None:
                 jsonrpc_response = JSONRPCResponse(

@@ -1,8 +1,8 @@
 import express, { Request, Response, Router } from "express";
-import { nanoid } from "nanoid";
+import { randomUUID as nanoid } from "node:crypto";
 import { McpServer,  } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import { Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode, Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 
 
@@ -11,7 +11,7 @@ type HTTMCPImplementation = Implementation & {
     apiPrefix?: string;
 };
 
-export default class HTTMCP extends McpServer {
+export class HTTMCP extends McpServer {
     private name: string = "httmcp";
     private publishServer?: string;
     private apiPrefix: string;
@@ -21,7 +21,6 @@ export default class HTTMCP extends McpServer {
         super(restServerInfo, options);
         this.publishServer = publishServer;
         this.apiPrefix = apiPrefix || "";
-        console.debug('HTTP MCP SDK initialized');
     }
 
     async publishToChannel(channelId: string, message: any, event: string = "message"): Promise<boolean> {
@@ -49,7 +48,7 @@ export default class HTTMCP extends McpServer {
         }
     }
 
-    getApp(): Router {
+    Router(): Router {
         const router = express.Router();
         router.use(express.json()); // for parsing application/json
         const prefix = this.apiPrefix || `/mcp/${this.name}`;
@@ -93,40 +92,14 @@ export default class HTTMCP extends McpServer {
         return router;
     }
 
-    // private _onrequest(request: JSONRPCRequest): void {
-    //     const handler =
-    //       this._requestHandlers.get(request.method) ?? this.fallbackRequestHandler;
-    
-    //     if (handler === undefined) {
-    //       this._transport
-    //         ?.send({
-    //           jsonrpc: "2.0",
-    //           id: request.id,
-    //           error: {
-    //             code: ErrorCode.MethodNotFound,
-    //             message: "Method not found",
-    //           },
-    //         })
-    //         .catch((error) =>
-    //           this._onerror(
-    //             new Error(`Failed to send an error response: ${error}`),
-    //           ),
-    //         );
-    //       return;
-    //     }
-
     private _onrequest(request: JSONRPCRequest): Promise<any> {
         // @ts-ignore
         const handler = this.server._requestHandlers.get(request.method) ?? this.server.fallbackRequestHandler;
     
-        if (handler === undefined) {
-          return Promise.reject("Method not found");
-        }
-    
         const abortController = new AbortController();
-        // @ts-ignore
-        this.server._requestHandlerAbortControllers.set(request.id, abortController);
-    
+        // @ts-ignore  // skip canceling request
+        // this.server._requestHandlerAbortControllers.set(request.id, abortController);
+
         // Create extra object with both abort signal and sessionId from transport
         const extra: RequestHandlerExtra = {
           signal: abortController.signal,
@@ -135,41 +108,38 @@ export default class HTTMCP extends McpServer {
     
         // Starting with Promise.resolve() puts any synchronous errors into the monad as well.
         return Promise.resolve()
-          .then(() => handler(request, extra))
-          .then(
-            (result) => {
-              if (abortController.signal.aborted) {
-                return;
-              }
-    
-            //   return this._transport?.send({
-            //     result,
-            //     jsonrpc: "2.0",
-            //     id: request.id,
-            //   });
-            },
-            (error) => {
-              if (abortController.signal.aborted) {
-                return;
-              }
-    
-            //   return this._transport?.send({
-            //     jsonrpc: "2.0",
-            //     id: request.id,
-            //     error: {
-            //       code: Number.isSafeInteger(error["code"])
-            //         ? error["code"]
-            //         : ErrorCode.InternalError,
-            //       message: error.message ?? "Internal error",
-            //     },
+          .then(() => {
+            if (handler === undefined) {
+              return Promise.reject({
+                code: ErrorCode.MethodNotFound,
+                message: "Method not found",
               });
-            },
+            }
+            return handler(request, extra)
+        })
+          .then(
+            (result) => ({ result }),
+            (error) => ({ error: {
+                code: Number.isSafeInteger(error["code"])
+                    ? error["code"]
+                    : ErrorCode.InternalError,
+                message: error.message ?? "Internal error",
+              }
+            })
           )
-          .catch((error) =>
-            // this._onerror(new Error(`Failed to send response: ${error}`)),
-          )
+          .then(res => {
+            if (abortController.signal.aborted) {
+              throw new Error("Request was aborted");
+            }
+            return {
+              jsonrpc: "2.0",
+              id: request.id,
+              result: (res as any)?.result,
+              error: (res as any)?.error,
+            };
+          })
           .finally(() => {
-            this.server._requestHandlerAbortControllers.delete(request.id);
+            // this.server._requestHandlerAbortControllers.delete(request.id);
           });
       }
 
@@ -181,18 +151,11 @@ export default class HTTMCP extends McpServer {
                 request.params._meta.sessionId = sessionId
             }
             // @ts-ignore
-            this._onrequest(request);
-            const transport = this.transports.get(sessionId || '');
-            
-            if (!transport) {
-                return res.status(404).json({ error: "Session not found" });
-            }
-            
-            // Let the transport handle the request
-            await transport.handlePostMessage(req, res);
+            const response = await this._onrequest(request);
+            res.status(200).json(response);
         } catch (error) {
             console.error(`Error handling MCP request: ${error}`);
-            res.status(500).json({ 
+            res.status(200).json({
                 jsonrpc: "2.0", 
                 id: req.body?.id || null,
                 error: {
@@ -211,3 +174,5 @@ export default class HTTMCP extends McpServer {
         });
     }
 }
+
+export default HTTMCP;

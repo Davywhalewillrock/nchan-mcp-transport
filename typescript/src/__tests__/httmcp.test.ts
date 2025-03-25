@@ -4,7 +4,7 @@ import express from 'express';
 // @ts-ignore
 import fetch from 'node-fetch';
 
-// 创建 global.fetch 兼容环境，因为 node-fetch 和原生 fetch 可能有冲突
+// Create global.fetch compatible environment, as node-fetch and native fetch may conflict
 if (!globalThis.fetch) {
   // @ts-ignore
   globalThis.fetch = fetch;
@@ -17,18 +17,18 @@ describe('HTTMCP Tests', () => {
   let server_instance: any;
   
   beforeAll(async () => {
-    // 创建 Express 应用
+    // Create Express application
     app = express();
     port = 3030;
     
-    // 创建 HTTMCP 实例
+    // Create HTTMCP instance
     server = new HTTMCP({
       name: 'httmcp-test',
       version: '1.0.0',
       publishServer: 'http://nchan:80'
     });
     
-    // 注册一个简单的加法工具
+    // Register a simple addition tool
     server.tool('add',
       { a: z.number(), b: z.number() },
       async ({ a, b }) => ({
@@ -36,10 +36,10 @@ describe('HTTMCP Tests', () => {
       })
     );
     
-    // 注册 HTTMCP 路由
-    app.use('/mcp/httmcp-test', server.Router());
+    // Register HTTMCP route
+    app.use(server.prefix, server.router);
         
-    // 启动服务器
+    // Start the server
     return new Promise<void>((resolve) => {
       server_instance = app.listen(port, () => {
         console.log(`Test server listening on port ${port}`);
@@ -53,7 +53,7 @@ describe('HTTMCP Tests', () => {
   });
   
   test('Server should have tools registered', async () => {
-    // 模拟工具列表请求
+    // Mock tool list request
     const response = await fetch(`http://localhost:${port}/mcp/httmcp-test/tools/list`, {
       method: 'POST',
       headers: { 
@@ -102,7 +102,7 @@ describe('HTTMCP Tests', () => {
   // });
   
   afterAll(done => {
-    // 关闭服务器
+    // Close the server
     if (server_instance) {
       server_instance.close(() => {
         console.log('Test server closed');

@@ -2,6 +2,14 @@
   "name": "httmcp",
   "version": "1.0.1",
   "description": "HTTP MCP Transport for Nchan - TypeScript SDK",
+  "keywords": [
+    "nchan",
+    "mcp",
+    "streamable",
+    "http",
+    "transport",
+    "sse"
+  ],
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -9,7 +17,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "vite build",
     "watch": "vite",
     "test": "jest",
     "test:watch": "jest --watch"

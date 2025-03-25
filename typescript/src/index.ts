@@ -49,10 +49,14 @@ export class HTTMCP extends McpServer {
         }
     }
 
-    Router(): Router {
+    get prefix(): string {
+        return this.apiPrefix || `/mcp/${this.name}`;
+    }
+
+    get router(): Router {
         const router = express.Router();
         router.use(express.json()); // for parsing application/json
-        const prefix = this.apiPrefix || `/mcp/${this.name}`;
+        const prefix = this.prefix;
         
         // Session start endpoint
         router.get("/", (_: Request, res: Response) => {
@@ -142,7 +146,7 @@ export class HTTMCP extends McpServer {
           .finally(() => {
             // this.server._requestHandlerAbortControllers.delete(request.id);
           });
-      }
+    }
 
     private async handleMcpRequest(req: Request, res: Response): Promise<void> {
         try {
@@ -166,7 +170,7 @@ export class HTTMCP extends McpServer {
             });
         }
     }
-    
+
     private async handleEmptyResponse(req: Request, res: Response): Promise<void> {
         res.status(200).json({
             jsonrpc: "2.0",

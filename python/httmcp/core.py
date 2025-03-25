@@ -57,7 +57,6 @@ class HTTMCP(FastMCP):
     @property
     def router(self) -> APIRouter:
         router = APIRouter(prefix=self.api_prefix if self.api_prefix else f"/mcp/{self.name}")
-        router.get("/", self.start_session)
         router.add_api_route("/", self.start_session, methods=["GET"])
         router.add_api_route("/endpoint", self.send_endpoint, methods=["GET"])
         router.add_api_route("/initialize", self.wrap_method(self.initialize), methods=["POST"])
@@ -74,7 +73,6 @@ class HTTMCP(FastMCP):
         router.add_api_route("/ping", self.wrap_method(empty_response), methods=["POST"])
         router.add_api_route("/notifications/initialized", self.wrap_method(empty_response), methods=["POST"])
         router.add_api_route("/notifications/cancelled", self.wrap_method(empty_response), methods=["POST"])
-        router
         return router
 
     def wrap_method(self, method):

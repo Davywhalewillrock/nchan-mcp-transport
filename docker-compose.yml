@@ -31,3 +31,10 @@ services:
       service: app
     environment:
       - VIRTUAL_HOST=jinareader.mcp.io
+
+  testadd:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    environment:
+      - VIRTUAL_HOST=testadd.mcp.io

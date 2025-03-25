@@ -1,6 +1,6 @@
 {
   "name": "httmcp",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "HTTP MCP Transport for Nchan - TypeScript SDK",
   "keywords": [
     "nchan",
@@ -24,8 +24,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
-    "express": "^4.21.2",
-    "nanoid": "^5.1.5"
+    "express": "^4.21.2"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
+    }
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

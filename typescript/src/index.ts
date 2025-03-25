@@ -76,6 +76,7 @@ export class HTTMCP extends McpServer {
             res.status(200).end();
         });
 
+        router.post("/", this.handleMcpRequest.bind(this));  // streamable http transport
         // MCP protocol endpoints - These match what's in the Python implementation
         router.post("/initialize", this.handleMcpRequest.bind(this));
         router.post("/resources/list", this.handleMcpRequest.bind(this));

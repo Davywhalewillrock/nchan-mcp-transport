@@ -4,8 +4,9 @@ import { McpServer,  } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
 import { ErrorCode, Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import OpenAPIClientAxios, { OpenAPIClient } from 'openapi-client-axios';
-import z from 'zod';
+import OpenAPIClientAxios, { OpenAPIClient, Operation } from 'openapi-client-axios';
+import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
+
 
 type HTTMCPImplementation = Implementation & {
     publishServer?: string;
@@ -190,26 +191,85 @@ type OpenAPIHTTMCPImplementation = HTTMCPImplementation & {
 export class OpenAPIMCP extends HTTMCP {
 
     private api: OpenAPIClientAxios;
-    private client: OpenAPIClient
+    private client: OpenAPIClient | null = null;
 
     constructor(serverInfo: OpenAPIHTTMCPImplementation, options?: ServerOptions) {
         const { definition, ...restServerInfo } = serverInfo;
         super(restServerInfo, options);
         this.api = new OpenAPIClientAxios({ definition });
-        this.client = this.api.initSync();
-
-        for (const operation of this.api.getOperations()) {
-            const { operationId, description, parameters, requestBody } = operation;
-            if (operationId) {
+    }
+    async init(): Promise<OpenAPIClient> {
+        return this.api.init().then((client) => {
+            this.client = client;
+            for (const operation of this.api.getOperations()) {
+                const { operationId, description } = operation;
+                if (operationId) {
+                    // add all tools to the mcp server
+                    // @ts-ignore
+                    this._registeredTools[operationId] = {
+                        description,
+                        inputSchema: jsonSchemaToZod(this.getInputSchema(operation)),
+                        callback: this.createCallback(operation),
+                    };
+                }
+            }
+            // @ts-ignore  call private method
+            this.setToolRequestHandlers()
+            return this.client;
+        });
+    }
+    getInputSchema(operation: Operation) {
+        // merge parameters and requestBody to inputSchema
+        const { parameters, requestBody } = operation;
+        // @ts-ignore
+        const content = requestBody?.content;
+        const jsonSchema = (
+          content?.["application/json"]?.schema ||
+          content?.["application/xml"]?.schema ||
+          content?.["application/x-www-form-urlencoded"]?.schema ||
+          { type: "object" }
+        );
+        if (Array.isArray(parameters)) {
+            if (!Array.isArray(jsonSchema.required)) {
+                jsonSchema.required = [];
+            }
+            if (!jsonSchema.properties) {
+                jsonSchema.properties = {};
+            }
+            for (const param of parameters) {
                 // @ts-ignore
-                this._registeredTools[operationId] = {
-                    description,
-                    // TODO need zod object for parameters
-                    inputSchema: { ...parameters, body: requestBody },
-                    callback: this.client[operationId].bind(this.client),
-                };
+                jsonSchema.properties[param?.name] = param.schema;
+                // @ts-ignore
+                if (param.required) {
+                    // @ts-ignore
+                    jsonSchema.required.push(param.name);
+                }
             }
         }
+        return jsonSchema;
+    }
+    createCallback(operation: Operation) {
+        const originalOperationMethod = async (args: Object) => {
+            args = args || {}; // Ensure args is an object
+            const { operationId, parameters } = operation;
+            // pop parameters from args
+            if (this.client && operationId && this.client?.[operationId]) {
+                let paramArg: any = null
+                // @ts-ignore
+                if (Array.isArray(parameters)) {
+                    paramArg = []
+                    for (const param of parameters) {
+                        // @ts-ignore
+                        paramArg.push({ name: param.name, value: args[param.name], in: param.in })  
+                        // @ts-ignore
+                        delete args[param.name]
+                    }
+                }
+                return this.client[operationId](paramArg, args)
+            }
+            throw new Error(`Operation ${operationId} not found`);
+        };
+        return originalOperationMethod;
     }
 }
 

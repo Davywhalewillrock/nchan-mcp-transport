@@ -21,6 +21,8 @@ export default defineConfig({
         "node:crypto",
         "@modelcontextprotocol/sdk/server/mcp.js",
         "@modelcontextprotocol/sdk/types.js",
+        "@n8n/json-schema-to-zod",
+        "openapi-client-axios",
       ],
       output: {
         // Provide global variables to use in the UMD build
@@ -29,6 +31,8 @@ export default defineConfig({
           "node:crypto": "crypto",
           "@modelcontextprotocol/sdk/server/mcp.js": "McpServer",
           "@modelcontextprotocol/sdk/types.js": "ErrorCode",
+          "@n8n/json-schema-to-zod": "jsonSchemaToZod",
+          "openapi-client-axios": "OpenAPIClientAxios",
         }
       }
     }

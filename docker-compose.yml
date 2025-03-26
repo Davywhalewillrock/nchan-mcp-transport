@@ -38,3 +38,12 @@ services:
       dockerfile: docker/Dockerfile.node
     environment:
       - VIRTUAL_HOST=testadd.mcp.io
+
+  petstore:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    volumes:
+      - ./typescript/petserver.js:/app/server.js
+    environment:
+      - VIRTUAL_HOST=petstore.mcp.io

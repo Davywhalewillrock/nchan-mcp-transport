@@ -23,7 +23,6 @@ server.init().then(() => {
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
-
 });
 
 // To run this server: node server.js

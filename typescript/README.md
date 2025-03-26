@@ -31,3 +31,37 @@ app.listen(3000, () => {
   console.log('MCP server running on port 3000');
 });
 ```
+
+## OpenAPI Support
+
+HTTMCP also supports creating MCP servers from OpenAPI specifications:
+
+```typescript
+import { OpenAPIMCP } from 'httmcp';
+import express from 'express';
+
+// Create MCP server from OpenAPI specification
+const mcpServer = new OpenAPIMCP({
+  definition: 'https://petstore3.swagger.io/api/v3/openapi.json', // URL or local file path
+  name: 'petstore',
+  version: '1.0.0',
+  publishServer: 'http://localhost:8080'
+});
+
+// Initialize the server (async operation)
+mcpServer.init().then(() => {
+  console.log('Server initialized from OpenAPI definition');
+
+  // Add MCP server to Express application
+  const app = express();
+  app.use(mcpServer.prefix, mcpServer.router);
+
+  app.listen(3000, () => {
+    console.log('OpenAPI MCP server running on port 3000');
+  });
+});
+
+await mcpServer.init();
+```
+
+The OpenAPIMCP automatically converts your OpenAPI endpoints into MCP tools that can be used by AI assistants through the MCP protocol.

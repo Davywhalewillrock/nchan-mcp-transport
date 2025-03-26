@@ -70,7 +70,8 @@ export class HTTMCP extends McpServer {
 
         // Endpoint info
         router.get("/endpoint", async (req: Request, res: Response) => {
-            const sessionId = req.header('X-MCP-Session-ID');
+            // support stramable HTTP transport
+            const sessionId = req.header('X-MCP-Session-ID') || req.header('Mcp-Session-Id');;
             const transport = req.header('X-MCP-Transport');
             
             if (transport === "sse" && sessionId) {
@@ -152,9 +153,15 @@ export class HTTMCP extends McpServer {
 
     private async handleMcpRequest(req: Request, res: Response): Promise<void> {
         try {
-            const sessionId = req.header('X-MCP-Session-ID');
             const request = req.body as JSONRPCRequest;
-            if (request.params?._meta) {
+            if (request.params) {
+                // support stramable HTTP transport
+                const sessionId = req.header('X-MCP-Session-ID') || req.header('Mcp-Session-Id');
+                if (!request.params?._meta) {
+                    // @ts-ignore
+                    request.params._meta = {};
+                }
+                // @ts-ignore
                 request.params._meta.sessionId = sessionId
             }
             // @ts-ignore

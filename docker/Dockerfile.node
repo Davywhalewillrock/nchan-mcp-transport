@@ -1,0 +1,15 @@
+FROM node:alpine
+
+WORKDIR /app
+
+# Install dependencies
+RUN npm install httmcp zod
+
+# Copy application code
+COPY typescript/server.js .
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Command to run the application
+CMD ["node", "server.js"]

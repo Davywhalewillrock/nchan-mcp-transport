@@ -1,45 +1,67 @@
 # HTTP MCP Transport for Nchan - TypeScript SDK
 
-This TypeScript SDK is under development and will provide functionality similar to the Python SDK.
+This is an HTTP-based MCP (Machine Conversation Protocol) transport library designed for integration with Nchan.
 
-## Planned Features
+## Installation
 
-- HTTP-based MCP transport support
-- Integration with Nchan
-- OpenAPI support
+```bash
+npm install httmcp
+# or
+yarn add httmcp
+```
 
-## Development Status
+## Usage
 
-This SDK has not been implemented yet. Please stay tuned for future updates.
+```typescript
+import { HTTMCP } from 'httmcp';
+import express from 'express';
 
-## Project Setup
+// Create MCP server
+const mcpServer = new HTTMCP({
+  name: "my-mcp",
+  instructions: "This is an MCP server",
+  publishServer: "http://localhost:8080"
+});
 
-This project uses TypeScript and Rollup for bundling.
+// Add MCP server to Express application
+const app = express();
+app.use(server.prefix, server.router);
 
-### Installation
+app.listen(3000, () => {
+  console.log('MCP server running on port 3000');
+});
+```
 
-1. Clone the repository:
-   ```sh
-   git clone <repository-url>
-   cd nchan-mcp-transport/typescript
-   ```
+## OpenAPI Support
 
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
+HTTMCP also supports creating MCP servers from OpenAPI specifications:
 
-3. Build the project:
-   ```sh
-   npm run build
-   ```
+```typescript
+import { OpenAPIMCP } from 'httmcp';
+import express from 'express';
 
-### Scripts
+// Create MCP server from OpenAPI specification
+const mcpServer = new OpenAPIMCP({
+  definition: 'https://petstore3.swagger.io/api/v3/openapi.json', // URL or local file path
+  name: 'petstore',
+  version: '1.0.0',
+  publishServer: 'http://localhost:8080'
+});
 
-- `build`: Bundles the project using Rollup.
-- `watch`: Watches for changes and rebuilds the project automatically.
-- `test`: Runs the test suite.
+// Initialize the server (async operation)
+mcpServer.init().then(() => {
+  console.log('Server initialized from OpenAPI definition');
 
-### Rollup Configuration
+  // Add MCP server to Express application
+  const app = express();
+  app.use(mcpServer.prefix, mcpServer.router);
 
-The project uses Rollup for bundling. The configuration can be found in `rollup.config.js`.
+  app.listen(3000, () => {
+    console.log('OpenAPI MCP server running on port 3000');
+  });
+});
+
+await mcpServer.init();
+```
+
+The OpenAPIMCP automatically converts your OpenAPI endpoints into MCP tools that can be used by AI assistants through the MCP protocol.

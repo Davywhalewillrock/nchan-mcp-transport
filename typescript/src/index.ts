@@ -4,6 +4,8 @@ import { McpServer,  } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
 import { ErrorCode, Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import OpenAPIClientAxios, { OpenAPIClient, Operation } from 'openapi-client-axios';
+import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
 
 
 type HTTMCPImplementation = Implementation & {
@@ -19,6 +21,7 @@ export class HTTMCP extends McpServer {
     constructor(serverInfo: HTTMCPImplementation, options?: ServerOptions) {
         const { publishServer, apiPrefix, ...restServerInfo } = serverInfo;
         super(restServerInfo, options);
+        this.name = serverInfo.name;
         this.publishServer = publishServer;
         this.apiPrefix = apiPrefix || "";
     }
@@ -48,10 +51,14 @@ export class HTTMCP extends McpServer {
         }
     }
 
-    Router(): Router {
+    get prefix(): string {
+        return this.apiPrefix || `/mcp/${this.name}`;
+    }
+
+    get router(): Router {
         const router = express.Router();
         router.use(express.json()); // for parsing application/json
-        const prefix = this.apiPrefix || `/mcp/${this.name}`;
+        const prefix = this.prefix;
         
         // Session start endpoint
         router.get("/", (_: Request, res: Response) => {
@@ -63,7 +70,8 @@ export class HTTMCP extends McpServer {
 
         // Endpoint info
         router.get("/endpoint", async (req: Request, res: Response) => {
-            const sessionId = req.header('X-MCP-Session-ID');
+            // support stramable HTTP transport
+            const sessionId = req.header('X-MCP-Session-ID') || req.header('Mcp-Session-Id');;
             const transport = req.header('X-MCP-Transport');
             
             if (transport === "sse" && sessionId) {
@@ -142,13 +150,19 @@ export class HTTMCP extends McpServer {
           .finally(() => {
             // this.server._requestHandlerAbortControllers.delete(request.id);
           });
-      }
+    }
 
     private async handleMcpRequest(req: Request, res: Response): Promise<void> {
         try {
-            const sessionId = req.header('X-MCP-Session-ID');
             const request = req.body as JSONRPCRequest;
-            if (request.params?._meta) {
+            if (request.params) {
+                // support stramable HTTP transport
+                const sessionId = req.header('X-MCP-Session-ID') || req.header('Mcp-Session-Id');
+                if (!request.params?._meta) {
+                    // @ts-ignore
+                    request.params._meta = {};
+                }
+                // @ts-ignore
                 request.params._meta.sessionId = sessionId
             }
             // @ts-ignore
@@ -166,13 +180,104 @@ export class HTTMCP extends McpServer {
             });
         }
     }
-    
+
     private async handleEmptyResponse(req: Request, res: Response): Promise<void> {
         res.status(200).json({
             jsonrpc: "2.0",
             id: req.body?.id || "",
             result: {}
         });
+    }
+}
+
+
+type OpenAPIHTTMCPImplementation = HTTMCPImplementation & {
+    definition: string;
+};
+
+
+export class OpenAPIMCP extends HTTMCP {
+
+    private api: OpenAPIClientAxios;
+    private client: OpenAPIClient | null = null;
+
+    constructor(serverInfo: OpenAPIHTTMCPImplementation, options?: ServerOptions) {
+        const { definition, ...restServerInfo } = serverInfo;
+        super(restServerInfo, options);
+        this.api = new OpenAPIClientAxios({ definition });
+    }
+    async init(): Promise<OpenAPIClient> {
+        return this.api.init().then((client) => {
+            this.client = client;
+            for (const operation of this.api.getOperations()) {
+                const { operationId, description } = operation;
+                if (operationId) {
+                    // add all tools to the mcp server
+                    // @ts-ignore
+                    this._registeredTools[operationId] = {
+                        description,
+                        inputSchema: jsonSchemaToZod(this.getInputSchema(operation)),
+                        callback: this.createCallback(operation),
+                    };
+                }
+            }
+            // @ts-ignore  call private method
+            this.setToolRequestHandlers()
+            return this.client;
+        });
+    }
+    getInputSchema(operation: Operation) {
+        // merge parameters and requestBody to inputSchema
+        const { parameters, requestBody } = operation;
+        // @ts-ignore
+        const content = requestBody?.content;
+        const jsonSchema = (
+          content?.["application/json"]?.schema ||
+          content?.["application/xml"]?.schema ||
+          content?.["application/x-www-form-urlencoded"]?.schema ||
+          { type: "object" }
+        );
+        if (Array.isArray(parameters)) {
+            if (!Array.isArray(jsonSchema.required)) {
+                jsonSchema.required = [];
+            }
+            if (!jsonSchema.properties) {
+                jsonSchema.properties = {};
+            }
+            for (const param of parameters) {
+                // @ts-ignore
+                jsonSchema.properties[param?.name] = param.schema;
+                // @ts-ignore
+                if (param.required) {
+                    // @ts-ignore
+                    jsonSchema.required.push(param.name);
+                }
+            }
+        }
+        return jsonSchema;
+    }
+    createCallback(operation: Operation) {
+        const originalOperationMethod = async (args: Object) => {
+            args = args || {}; // Ensure args is an object
+            const { operationId, parameters } = operation;
+            // pop parameters from args
+            if (this.client && operationId && this.client?.[operationId]) {
+                let paramArg: any = null
+                // @ts-ignore
+                if (Array.isArray(parameters)) {
+                    paramArg = []
+                    for (const param of parameters) {
+                        // @ts-ignore
+                        paramArg.push({ name: param.name, value: args[param.name], in: param.in })  
+                        // @ts-ignore
+                        delete args[param.name]
+                    }
+                }
+                return this.client[operationId](paramArg, args)
+            }
+            throw new Error(`Operation ${operationId} not found`);
+        };
+        return originalOperationMethod;
     }
 }
 

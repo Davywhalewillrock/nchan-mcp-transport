@@ -1,6 +1,8 @@
-import { HTTMCP } from '../index';
-import { z } from 'zod';
+import { OpenAPIMCP } from '../index';
 import express from 'express';
+import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
+import { zodToJsonSchema } from "zod-to-json-schema";
+
 // @ts-ignore
 import fetch from 'node-fetch';
 
@@ -10,8 +12,8 @@ if (!globalThis.fetch) {
   globalThis.fetch = fetch;
 }
 
-describe('HTTMCP Tests', () => {
-  let server: HTTMCP;
+describe('OpenAPIMCP Tests', () => {
+  let server: OpenAPIMCP;
   let app: express.Application;
   let port: number;
   let server_instance: any;
@@ -19,26 +21,20 @@ describe('HTTMCP Tests', () => {
   beforeAll(async () => {
     // Create Express application
     app = express();
-    port = 3030;
+    port = 3031;
     
     // Create HTTMCP instance
-    server = new HTTMCP({
-      name: 'httmcp-test',
+    server = new OpenAPIMCP({
+      definition: 'https://petstore3.swagger.io/api/v3/openapi.json',
+      name: 'petstore',
       version: '1.0.0',
       publishServer: 'http://nchan:80'
     });
-    
-    // Register a simple addition tool
-    server.tool('add',
-      { a: z.number(), b: z.number() },
-      async ({ a, b }) => ({
-        content: [{ type: 'text', text: String(a + b) }]
-      })
-    );
-    
+    await server.init();
+  
     // Register HTTMCP route
     app.use(server.prefix, server.router);
-        
+
     // Start the server
     return new Promise<void>((resolve) => {
       server_instance = app.listen(port, () => {
@@ -47,14 +43,28 @@ describe('HTTMCP Tests', () => {
       });
     });
   });
-  
+
+  test('zod schema', () => {
+    const jsonSchema = {
+      type: 'object',
+      required: [ 'username' ],
+      properties: { username: { type: 'string' } }
+    }
+    const zodSchema = jsonSchemaToZod(jsonSchema)
+    expect(zodSchema).toBeDefined();
+    
+    // Parse the string output into an actual zod schema    
+    const jsonSchema2 = zodToJsonSchema(zodSchema)
+    expect(jsonSchema2).toBeDefined();
+  })
+
   test('Server should initialize correctly', () => {
     expect(server).toBeDefined();
   });
   
   test('Server should have tools registered', async () => {
     // Mock tool list request
-    const response = await fetch(`http://localhost:${port}/mcp/httmcp-test/tools/list`, {
+    const response = await fetch(`http://localhost:${port}/mcp/${server.name}/tools/list`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -69,12 +79,13 @@ describe('HTTMCP Tests', () => {
     });
     
     const data = await response.json();
+    // console.log("tools response", data);
     expect(data.result).toBeDefined();
-    expect(data.result.tools).toContainEqual(expect.objectContaining({ name: 'add' }));
+    expect(data.result.tools).toContainEqual(expect.objectContaining({ name: 'getPetById' }));
   });
   
   test('Server should call tool correctly', async () => {
-    const response = await fetch(`http://localhost:${port}/mcp/httmcp-test/tools/call`, {
+    const response = await fetch(`http://localhost:${port}/mcp/${server.name}/tools/call`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -85,15 +96,15 @@ describe('HTTMCP Tests', () => {
         id: '2',
         method: 'tools/call',
         params: {
-          name: 'add',
-          arguments: { a: 2, b: 3 }
+          name: 'getPetById',
+          arguments: { petId: 5 }
         }
       })
     });
     
     const data = await response.json();
     expect(data.result).toBeDefined();
-    expect(data.result.content[0].text).toBe('5');
+    console.log('result', data.result);
   });
   
   // test('Server should publish to channel', async () => {

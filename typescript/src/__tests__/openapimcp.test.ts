@@ -2,6 +2,7 @@ import { OpenAPIMCP } from '../index';
 import express from 'express';
 import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { OpenAPIClientAxios } from 'openapi-client-axios';
 
 // @ts-ignore
 import fetch from 'node-fetch';
@@ -43,6 +44,18 @@ describe('OpenAPIMCP Tests', () => {
       });
     });
   });
+
+  test('openapi client', async () => {
+    const api = new OpenAPIClientAxios({
+      definition: 'https://ghfast.top/https://raw.githubusercontent.com/lloydzhou/openapiclient/refs/heads/main/examples/jinareader.json'
+    });
+    const client = await api.init();
+    const response = await client.ReadUrlContent("https://github.com/ConechoAI/nchan-mcp-transport");
+    expect(response).toBeDefined();
+    console.log("response", response);
+    expect(response.status).toBe(200);
+    expect(response.data).toBeDefined();
+  })
 
   test('zod schema', () => {
     const jsonSchema = {

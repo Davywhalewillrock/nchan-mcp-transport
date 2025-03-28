@@ -10,6 +10,7 @@ const { HTTMCP } = require('httmcp');
 // Create MCP server
 const server = new HTTMCP({
   name: "testadd",
+  version: "1.0.0",
   instructions: "This is an MCP server",
   publishServer: "http://nchan:80"
 });

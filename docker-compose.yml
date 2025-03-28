@@ -36,14 +36,16 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.node
+    volumes:
+      - ./typescript/server.js:/app/server.js
     environment:
       - VIRTUAL_HOST=testadd.mcp.io
 
-  petstore:
+  jinareader1:
     build:
       context: .
       dockerfile: docker/Dockerfile.node
     volumes:
-      - ./typescript/petserver.js:/app/server.js
+      - ./typescript/jinareader1.js:/app/server.js
     environment:
-      - VIRTUAL_HOST=petstore.mcp.io
+      - VIRTUAL_HOST=jinareader1.mcp.io

@@ -8,8 +8,9 @@ const { OpenAPIMCP } = require('httmcp');
 
 // Create MCP server
 const server = new OpenAPIMCP({
-  definition: 'https://petstore3.swagger.io/api/v3/openapi.json',
-  name: "petstore",
+  definition: 'https://ghfast.top/https://raw.githubusercontent.com/lloydzhou/openapiclient/refs/heads/main/examples/jinareader.json',
+  name: "jinareader1",
+  version: "1.0.0",
   instructions: "This is an petstore MCP server",
   publishServer: "http://nchan:80"
 });

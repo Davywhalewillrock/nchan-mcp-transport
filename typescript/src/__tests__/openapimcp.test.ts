@@ -1,7 +1,5 @@
 import { OpenAPIMCP } from '../index';
 import express from 'express';
-import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { OpenAPIClientAxios } from 'openapi-client-axios';
 
 // @ts-ignore
@@ -55,20 +53,6 @@ describe('OpenAPIMCP Tests', () => {
     // console.log("response", response);
     expect(response.status).toBe(200);
     expect(response.data).toBeDefined();
-  })
-
-  test('zod schema', () => {
-    const jsonSchema = {
-      type: 'object',
-      required: [ 'username' ],
-      properties: { username: { type: 'string' } }
-    }
-    const zodSchema = jsonSchemaToZod(jsonSchema)
-    expect(zodSchema).toBeDefined();
-    
-    // Parse the string output into an actual zod schema    
-    const jsonSchema2 = zodToJsonSchema(zodSchema)
-    expect(jsonSchema2).toBeDefined();
   })
 
   test('Server should initialize correctly', () => {

@@ -1,6 +1,6 @@
 {
   "name": "httmcp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "HTTP MCP Transport for Nchan - TypeScript SDK",
   "keywords": [
     "nchan",

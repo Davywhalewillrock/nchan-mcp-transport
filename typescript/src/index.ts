@@ -225,28 +225,21 @@ export class OpenAPIMCP extends HTTMCP {
                     throw new McpError(ErrorCode.InvalidParams, `Operation ${request.params.name} not found`);
                 }
                 const callback = this.createCallback(operation);
-                try {
-                    const args = request.params.arguments || {};
-                    const response = await callback(args);
+                return callback(request.params.arguments || {}).then((response: any) => [response?.data?.toString()]).catch((error: any) => {
+                    console.error("Error calling operation", request.params.name, error);
+                    return [error instanceof Error ? error.message : String(error), true];
+                }).then((result) => {
+                    const [text, isError] = result;
                     return {
                         content: [
                             {
                                 type: "text",
-                                text: response.data.toString(),
+                                text,
                             },
                         ],
+                        isError,
                     };
-                } catch (error) {
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: error instanceof Error ? error.message : String(error),
-                            },
-                        ],
-                        isError: true,
-                    };
-                }
+                });
             });
             return this.client;
         });
@@ -287,10 +280,9 @@ export class OpenAPIMCP extends HTTMCP {
             const { operationId, parameters } = operation;
             // pop parameters from args
             if (this.client && operationId && this.client?.[operationId]) {
-                let paramArg: any = null
+                let paramArg: any = [];
                 // @ts-ignore
                 if (Array.isArray(parameters)) {
-                    paramArg = []
                     for (const param of parameters) {
                         // @ts-ignore
                         paramArg.push({ name: param.name, value: args[param.name], in: param.in })  
@@ -298,7 +290,9 @@ export class OpenAPIMCP extends HTTMCP {
                         delete args[param.name]
                     }
                 }
-                return this.client[operationId](paramArg, args)
+                // must be undefined when no payload
+                const payload = Object.keys(args).length ? args : undefined
+                return await this.client[operationId](paramArg, payload)
             }
             throw new Error(`Operation ${operationId} not found`);
         };

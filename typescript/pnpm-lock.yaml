@@ -11,9 +11,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.7.0
         version: 1.7.0
-      '@n8n/json-schema-to-zod':
-        specifier: ^1.1.0
-        version: 1.1.0(zod@3.24.2)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -346,11 +343,6 @@ packages:
   '@modelcontextprotocol/sdk@1.7.0':
     resolution: {integrity: sha512-IYPe/FLpvF3IZrd/f5p5ffmWhMc3aEMuM2wGJASDqC2Ge7qatVCdbfPx3n/5xFeb19xN0j/911M2AaFuircsWA==}
     engines: {node: '>=18'}
-
-  '@n8n/json-schema-to-zod@1.1.0':
-    resolution: {integrity: sha512-HfL3jq5NSb0Mng56QCfUnzD09F4wxWR543jYJZ+XBQpb0f9B102r6K3qEtdXVTs1mwHVnxz5KBaesqipFYPjww==}
-    peerDependencies:
-      zod: ^3.0.0
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2638,10 +2630,6 @@ snapshots:
       zod-to-json-schema: 3.24.5(zod@3.24.2)
     transitivePeerDependencies:
       - supports-color
-
-  '@n8n/json-schema-to-zod@1.1.0(zod@3.24.2)':
-    dependencies:
-      zod: 3.24.2
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

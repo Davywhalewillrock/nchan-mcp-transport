@@ -52,7 +52,7 @@ describe('OpenAPIMCP Tests', () => {
     const client = await api.init();
     const response = await client.ReadUrlContent("https://github.com/ConechoAI/nchan-mcp-transport");
     expect(response).toBeDefined();
-    console.log("response", response);
+    // console.log("response", response);
     expect(response.status).toBe(200);
     expect(response.data).toBeDefined();
   })

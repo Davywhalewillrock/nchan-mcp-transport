@@ -2,10 +2,9 @@ import express, { Request, Response, Router } from "express";
 import { randomUUID as nanoid } from "node:crypto";
 import { McpServer,  } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import { ErrorCode, Implementation, JSONRPCRequest } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode, Implementation, JSONRPCRequest, ListToolsRequestSchema, CallToolRequestSchema, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import OpenAPIClientAxios, { OpenAPIClient, Operation } from 'openapi-client-axios';
-import { jsonSchemaToZod } from "@n8n/json-schema-to-zod"
 
 
 type HTTMCPImplementation = Implementation & {
@@ -209,20 +208,46 @@ export class OpenAPIMCP extends HTTMCP {
     async init(): Promise<OpenAPIClient> {
         return this.api.init().then((client) => {
             this.client = client;
-            for (const operation of this.api.getOperations()) {
-                const { operationId, description } = operation;
-                if (operationId) {
-                    // add all tools to the mcp server
-                    // @ts-ignore
-                    this._registeredTools[operationId] = {
+            this.server.registerCapabilities({tools:{ listChanged: true}});
+            this.server.setRequestHandler(ListToolsRequestSchema, () => ({
+                tools: this.api.getOperations().map((operation) => {
+                    const { operationId, description } = operation;
+                    return {
+                        name: operationId,
                         description,
-                        inputSchema: jsonSchemaToZod(this.getInputSchema(operation)),
-                        callback: this.createCallback(operation),
+                        inputSchema: this.getInputSchema(operation),
+                    };
+                }),
+            }));
+            this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+                const operation = this.api.getOperation(request.params.name);
+                if (!operation) {
+                    throw new McpError(ErrorCode.InvalidParams, `Operation ${request.params.name} not found`);
+                }
+                const callback = this.createCallback(operation);
+                try {
+                    const args = request.params.arguments || {};
+                    const response = await callback(args);
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: response.data.toString(),
+                            },
+                        ],
+                    };
+                } catch (error) {
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: error instanceof Error ? error.message : String(error),
+                            },
+                        ],
+                        isError: true,
                     };
                 }
-            }
-            // @ts-ignore  call private method
-            this.setToolRequestHandlers()
+            });
             return this.client;
         });
     }

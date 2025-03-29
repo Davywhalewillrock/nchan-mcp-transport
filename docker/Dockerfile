@@ -3,8 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.11-alpine
 WORKDIR /app
 
 # Install dependencies
-COPY python/examples/requirements.txt .
-RUN uv venv && uv pip install --no-cache-dir -r requirements.txt
+RUN uv venv && uv tool --no-cache install httmcp
 
 # Install the application
 RUN apk add --no-cache --virtual .run-deps bash openssl nginx nginx-mod-http-nchan

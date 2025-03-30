@@ -20,6 +20,11 @@ RUN mkdir -p '/etc/nginx/toplevel.conf.d' \
 COPY docker/default.conf /etc/nginx/http.d/default.conf
 COPY docker/entrypoint.sh /
 
+COPY python/examples/requirements.txt /app/requirements.txt
+RUN uv pip install --no-cache-dir -r /app/requirements.txt
+COPY python/httmcp/__main__.py /app/main.py
+COPY docker/feishu_group_summary.json /app/openapi.json
+
 # Expose the port the app runs on
 EXPOSE 80
 EXPOSE 8000

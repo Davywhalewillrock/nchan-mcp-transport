@@ -1,0 +1,375 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Feishu Open Platform API",
+    "description": "Message and group related APIs provided by Feishu Open Platform",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://open.feishu.cn",
+      "description": "Feishu Open Platform API URL"
+    }
+  ],
+  "paths": {
+    "/open-apis/im/v1/messages": {
+      "get": {
+        "summary": "Get Messages",
+        "description": "Get one-to-one chat, group chat, or topic messages",
+        "operationId": "getMessages",
+        "parameters": [
+          {
+            "name": "container_id_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["chat", "thread"]
+            },
+            "description": "Container type.\n- chat: includes one-to-one chat (p2p) and group chat (group)\n- thread: topic"
+          },
+          {
+            "name": "container_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Container ID. ID type matches the container_id_type value."
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Start time of the historical information to be queried, timestamp in seconds."
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "End time of the historical information to be queried, timestamp in seconds."
+          },
+          {
+            "name": "sort_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["ByCreateTimeAsc", "ByCreateTimeDesc"],
+              "default": "ByCreateTimeAsc"
+            },
+            "description": "Message sorting method."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "description": "Page size, the number of data entries returned per request."
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pagination token, leave empty for the first request."
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Return code, 0 means success"
+                    },
+                    "msg": {
+                      "type": "string",
+                      "description": "Return message"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Message"
+                          }
+                        },
+                        "page_token": {
+                          "type": "string",
+                          "description": "Pagination token"
+                        },
+                        "has_more": {
+                          "type": "boolean",
+                          "description": "Whether there is more data"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed"
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "429": {
+            "description": "Request too frequent, exceeding rate limit"
+          }
+        }
+      }
+    },
+    "/open-apis/im/v1/chats": {
+      "get": {
+        "summary": "Get Chat Groups List",
+        "description": "Get the list of chat groups that the user belongs to",
+        "operationId": "getChats",
+        "parameters": [
+          {
+            "name": "user_id_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["open_id", "union_id", "user_id"],
+              "default": "open_id"
+            },
+            "description": "User ID type:\n- open_id: Identifies a user's identity in a specific application\n- union_id: Identifies a user's identity under a specific application developer\n- user_id: Identifies a user's identity within a tenant"
+          },
+          {
+            "name": "sort_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["ByCreateTimeAsc", "ByActiveTimeDesc"],
+              "default": "ByCreateTimeAsc"
+            },
+            "description": "Group sorting method:\n- ByCreateTimeAsc: Sort by group creation time in ascending order\n- ByActiveTimeDesc: Sort by group active time in descending order"
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pagination token, leave empty for the first request"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Page size, used to limit the number of data entries returned per request"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved chat group list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Return code, 0 means success"
+                    },
+                    "msg": {
+                      "type": "string",
+                      "description": "Return message"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Chat"
+                          }
+                        },
+                        "page_token": {
+                          "type": "string",
+                          "description": "Pagination token"
+                        },
+                        "has_more": {
+                          "type": "boolean",
+                          "description": "Whether there is more data"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed"
+          },
+          "403": {
+            "description": "Insufficient permissions"
+          },
+          "429": {
+            "description": "Request too frequent, exceeding rate limit"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Authentication method: Bearer token"
+      }
+    },
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "description": "Message ID"
+          },
+          "root_id": {
+            "type": "string",
+            "description": "Topic root message ID"
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Parent message ID"
+          },
+          "msg_type": {
+            "type": "string",
+            "description": "Message type"
+          },
+          "create_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Message creation time"
+          },
+          "update_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Message update time"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the message has been deleted"
+          },
+          "body": {
+            "type": "object",
+            "description": "Message content"
+          },
+          "sender": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Sender ID"
+              },
+              "id_type": {
+                "type": "string",
+                "description": "ID type"
+              },
+              "sender_type": {
+                "type": "string",
+                "description": "Sender type"
+              }
+            }
+          }
+        }
+      },
+      "Chat": {
+        "type": "object",
+        "properties": {
+          "chat_id": {
+            "type": "string",
+            "description": "Group ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Group name"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "Group avatar URL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Group description"
+          },
+          "owner_id": {
+            "type": "string",
+            "description": "Group owner ID"
+          },
+          "owner_id_type": {
+            "type": "string",
+            "description": "Group owner ID type"
+          },
+          "external": {
+            "type": "boolean",
+            "description": "Whether it is an external group"
+          },
+          "tenant_key": {
+            "type": "string",
+            "description": "Tenant key"
+          },
+          "create_time": {
+            "type": "integer",
+            "description": "Group creation time, Unix timestamp (seconds)"
+          },
+          "member_count": {
+            "type": "integer",
+            "description": "Number of group members"
+          },
+          "chat_mode": {
+            "type": "string",
+            "description": "Group mode"
+          },
+          "chat_type": {
+            "type": "string",
+            "description": "Group type"
+          }
+        }
+      }
+    }
+  }
+}

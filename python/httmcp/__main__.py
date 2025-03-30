@@ -49,8 +49,6 @@ class FeishuBotClientAuth(httpx.Auth):
 
     def auth_flow(self, request: httpx.Request):
         # Add the app_id and app_secret as headers
-        import logging
-        logging.warning("Using Feishu app_id and app_secret for authentication %r", self.app_id)
         request.headers["Authorization"] = f"Bearer {self.tenent_access_token}"
         yield request
 
@@ -63,8 +61,6 @@ def create_app():
             app_id=args.app_id,
             app_secret=args.app_secret
         ) if args.app_id and args.app_secret else None
-        import logging
-        logging.warning("Using Feishu app_id and app_secret for authentication %r", args.app_id, auth.tenent_access_token)
         openapi_server = await OpenAPIMCP.from_openapi(
             args.openapi_file,
             name=args.name,
